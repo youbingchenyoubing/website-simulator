@@ -66,7 +66,7 @@ app.use((e, _req, res, _next) => {
 });
 
 // 合规启动检查：默认仅回环
-if (env.HOST !== '127.0.0.1' && env.HOST !== 'localhost' && env.HOST !== '0.0.0.0') {
+if (env.HOST !== '127.0.0.1' && env.HOST !== 'localhost') {
   console.warn(`\n⚠️⚠️⚠️  合规警告：服务将绑定到 ${env.HOST}，请确认这是经过评审的内网演示环境！\n`);
 }
 app.listen(env.PORT, env.HOST, () => {

@@ -7,6 +7,14 @@ import { env } from '../env.js';
 export const adminRouter = Router();
 const COOKIE_OPTS = { httpOnly: true, sameSite: 'lax' };
 
+/**
+ * 所有后台写操作都要把子资源限定在 URL 的场景中。Prisma 的主键查询本身
+ * 不带 scenarioId，直接 update/delete 会让已知 id 的资源被跨场景修改。
+ */
+async function ownedRecord(model, id, scenarioId) {
+  return prisma[model].findFirst({ where: { id, scenarioId } });
+}
+
 // ---------- 管理端认证 ----------
 adminRouter.post('/admin/login', wrap(async (req, res) => {
   const { username, password } = req.body || {};
@@ -124,6 +132,8 @@ adminRouter.get('/admin/scenarios/:id/overview', wrap(async (req, res) => {
 // ---------- 店铺 ----------
 adminRouter.put('/admin/scenarios/:id/shop', wrap(async (req, res) => {
   const { name, avatar, metrics } = req.body || {};
+  const scenario = await prisma.scenario.findUnique({ where: { id: req.params.id } });
+  if (!scenario) return res.json(err('场景不存在'));
   const existing = await prisma.shop.findFirst({ where: { scenarioId: req.params.id } });
   const data = { name: String(name ?? ''), avatar: avatar ?? null, metrics: JSON.stringify(metrics ?? {}) };
   const shop = existing
@@ -167,11 +177,13 @@ adminRouter.post('/admin/scenarios/:id/products', wrap(async (req, res) => {
 }));
 
 adminRouter.patch('/admin/scenarios/:id/products/:pid', wrap(async (req, res) => {
+  if (!await ownedRecord('product', req.params.pid, req.params.id)) return res.json(err('商品不存在或不属于该场景'));
   const p = await prisma.product.update({ where: { id: req.params.pid }, data: productData(req.body || {}) });
   res.json(ok(p));
 }));
 
 adminRouter.delete('/admin/scenarios/:id/products/:pid', wrap(async (req, res) => {
+  if (!await ownedRecord('product', req.params.pid, req.params.id)) return res.json(err('商品不存在或不属于该场景'));
   await prisma.product.delete({ where: { id: req.params.pid } });
   res.json(ok(null));
 }));
@@ -207,11 +219,13 @@ adminRouter.post('/admin/scenarios/:id/orders', wrap(async (req, res) => {
 }));
 
 adminRouter.patch('/admin/scenarios/:id/orders/:oid', wrap(async (req, res) => {
+  if (!await ownedRecord('order', req.params.oid, req.params.id)) return res.json(err('订单不存在或不属于该场景'));
   const o = await prisma.order.update({ where: { id: req.params.oid }, data: orderData(req.body || {}) });
   res.json(ok(o));
 }));
 
 adminRouter.delete('/admin/scenarios/:id/orders/:oid', wrap(async (req, res) => {
+  if (!await ownedRecord('order', req.params.oid, req.params.id)) return res.json(err('订单不存在或不属于该场景'));
   await prisma.order.delete({ where: { id: req.params.oid } });
   res.json(ok(null));
 }));
@@ -269,6 +283,7 @@ adminRouter.post('/admin/scenarios/:id/accounts', wrap(async (req, res) => {
 
 adminRouter.patch('/admin/scenarios/:id/accounts/:aid', wrap(async (req, res) => {
   const { username, password, role } = req.body || {};
+  if (!await ownedRecord('mockAccount', req.params.aid, req.params.id)) return res.json(err('账号不存在或不属于该场景'));
   const a = await prisma.mockAccount.update({
     where: { id: req.params.aid },
     data: {
@@ -281,6 +296,7 @@ adminRouter.patch('/admin/scenarios/:id/accounts/:aid', wrap(async (req, res) =>
 }));
 
 adminRouter.delete('/admin/scenarios/:id/accounts/:aid', wrap(async (req, res) => {
+  if (!await ownedRecord('mockAccount', req.params.aid, req.params.id)) return res.json(err('账号不存在或不属于该场景'));
   await prisma.mockAccount.delete({ where: { id: req.params.aid } });
   res.json(ok(null));
 }));

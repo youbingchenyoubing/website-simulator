@@ -4,7 +4,8 @@ import { ok, err, parseMetrics, intParam, wrap } from '../util.js';
 import { requireSiteSession } from './auth.js';
 
 export const pagesRouter = Router();
-pagesRouter.use(requireSiteSession);
+// Router 挂载在 /api 下；必须限定为 /pages，避免抢先拦截 /auth、/admin 等路由。
+pagesRouter.use('/pages', requireSiteSession);
 
 /** 场景有效性校验：会话中的场景必须仍存在 */
 async function resolveScenario(req, res) {

@@ -1,8 +1,10 @@
 node_modules/
+.npm-cache/
 dist/
 *.db
 *.db-journal
 .env
+!server/.env
 .DS_Store
 apps/client/out/
 .idea
