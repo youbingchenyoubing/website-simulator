@@ -1,0 +1,20 @@
+{
+  "name": "website-simulator",
+  "private": true,
+  "version": "0.1.0",
+  "description": "封闭环境电商平台卖家中心模拟器（仅内部培训/演示用途）",
+  "workspaces": [
+    "server",
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:site": "npm run dev -w @wsim/site",
+    "dev:admin": "npm run dev -w @wsim/admin",
+    "build": "npm run build -w @wsim/shared && npm run build -w @wsim/site && npm run build -w @wsim/admin && npm run build -w server",
+    "start": "npm run start -w server",
+    "db:push": "npm run db:push -w server",
+    "db:seed": "npm run db:seed -w server"
+  }
+}

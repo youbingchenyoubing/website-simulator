@@ -1,0 +1,19 @@
+services:
+  simulator:
+    build: .
+    container_name: website-simulator
+    ports:
+      # 合规约束：默认只暴露本机回环；内网演示需显式改为内网 IP 并经过评审
+      - "127.0.0.1:8080:8080"
+    environment:
+      HOST: 0.0.0.0            # 容器内必须监听 0.0.0.0，由 ports 映射限制只到宿主机回环
+      PORT: 8080
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin123 # 演示默认值，正式使用必须修改
+      DEMO_WATERMARK: "模拟环境 · 仅供培训演示"
+    volumes:
+      - simulator-data:/app/server/data
+    restart: unless-stopped
+
+volumes:
+  simulator-data:

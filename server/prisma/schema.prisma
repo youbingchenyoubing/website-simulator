@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Scenario {
+  id        String   @id
+  name      String
+  site      String // 'shein' | 'amazon'
+  status    String   @default("active") // draft | active | archived
+  demoLogin Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shops    Shop[]
+  products Product[]
+  orders   Order[]
+  accounts MockAccount[]
+}
+
+model Shop {
+  id         String   @id
+  scenarioId String
+  name       String
+  avatar     String?
+  metrics    String   @default("{}") // JSON 文本：{ todaySales, todayOrders, totalSales, balance, currency }
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@index([scenarioId])
+}
+
+model Product {
+  id         String   @id
+  scenarioId String
+  title      String
+  sku        String   @default("")
+  image      String?
+  price      Float    @default(0)
+  stock      Int      @default(0)
+  sales      Int      @default(0)
+  status     String   @default("on") // on | off
+  createdAt  DateTime @default(now())
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@index([scenarioId])
+}
+
+model Order {
+  id           String   @id
+  scenarioId   String
+  orderNo      String
+  productId    String?
+  productTitle String
+  quantity     Int      @default(1)
+  amount       Float    @default(0)
+  buyer        String   @default("")
+  status       String   @default("pending") // pending|shipped|completed|cancelled|refund
+  createdAt    DateTime @default(now())
+  scenario     Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@index([scenarioId, status])
+  @@index([scenarioId, createdAt])
+}
+
+model MockAccount {
+  id         String   @id
+  scenarioId String
+  username   String
+  password   String // 演示数据，仅存库/校验，任何接口不回传
+  role       String   @default("seller")
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  @@unique([scenarioId, username])
+}
+
+model InterceptRule {
+  id      String  @id
+  host    String  @unique
+  site    String // 'shein' | 'amazon'
+  mode    String  @default("local") // 'local' | 'rewrite'
+  enabled Boolean @default(true)
+}
+
+model AdminUser {
+  id           String @id
+  username     String @unique
+  passwordHash String
+}
